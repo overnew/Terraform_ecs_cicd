@@ -1,0 +1,26 @@
+version: 0.2 # 
+env: # 환경변수를 정의합니다.
+  variables:
+    AWS_DEFAULT_REGION: "ap-northeast-2"
+    ECR_URL: "dkr.ecr.ap-northeast-1.amazonaws.com/name"
+    ECR_DOCKER_IMAGE: "name"
+    ECR_DOCKER_TAG: "build"
+
+phases: # 빌드 단계를 정의합니다.
+  pre_build:
+    commands:
+      - aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${ECR_URL}
+  build:
+    on-failure: ABORT # ABORT or CONTINUE 두가지 명령어 중 하나를 선택 가능합니다.
+    commands:
+      - docker build -t ${ECR_URL}/${ECR_DOCKER_IMAGE}:${ECR_DOCKER_TAG} .
+  post_build:
+    commands:
+      - docker push ${ECR_URL}/${ECR_DOCKER_IMAGE}:${ECR_DOCKER_TAG}
+artifacts:
+  files:
+    - appspec.yml
+    - kill_process.sh
+    - start_process.sh
+    - docker-compose.yml
+  discard-paths: yes
